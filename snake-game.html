@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: white;
+        }
+        #gameCanvas {
+            border: 3px solid #fff;
+            background: #000;
+            margin: 10px;
+        }
+        .info {
+            font-size: 20px;
+            margin: 10px 0;
+        }
+        .message {
+            font-size: 16px;
+            color: #88ff88;
+            margin: 5px 0;
+        }
+        .game-over {
+            font-size: 24px;
+            color: #ff4444;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🐍 Snake Game</h1>
+    <div class="info">Score: <span id="score">0</span></div>
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div id="instructions" class="message">Press Arrow Keys or WASD to start!</div>
+    <div id="gameOverMsg" class="game-over" style="display:none;">Game Over! Press SPACE to restart</div>
+    
+    <script>
+        // Game setup
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreEl = document.getElementById('score');
+        const instructionsEl = document.getElementById('instructions');
+        const gameOverEl = document.getElementById('gameOverMsg');
+        
+        const gridSize = 20;
+        const tileCount = canvas.width / gridSize;
+        
+        // Game state
+        let snake = [{x: 10, y: 10}];
+        let dx = 0;
+        let dy = 0;
+        let foodX = 15;
+        let foodY = 15;
+        let score = 0;
+        let gameRunning = false;
+        let gameStarted = false;
+        
+        // Draw functions
+        function drawGame() {
+            // Clear canvas
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw snake
+            ctx.fillStyle = 'lime';
+            for (let segment of snake) {
+                ctx.fillRect(segment.x * gridSize, segment.y * gridSize, gridSize - 2, gridSize - 2);
+            }
+            
+            // Draw food
+            ctx.fillStyle = 'red';
+            ctx.fillRect(foodX * gridSize, foodY * gridSize, gridSize - 2, gridSize - 2);
+        }
+        
+        // Game logic
+        function update() {
+            if (!gameRunning) return;
+            
+            // Move snake
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+            
+            // Check wall collision
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                gameOver();
+                return;
+            }
+            
+            // Check self collision
+            for (let segment of snake) {
+                if (head.x === segment.x && head.y === segment.y) {
+                    gameOver();
+                    return;
+                }
+            }
+            
+            snake.unshift(head);
+            
+            // Check food collision
+            if (head.x === foodX && head.y === foodY) {
+                score++;
+                scoreEl.textContent = score;
+                generateFood();
+            } else {
+                snake.pop();
+            }
+        }
+        
+        function generateFood() {
+            do {
+                foodX = Math.floor(Math.random() * tileCount);
+                foodY = Math.floor(Math.random() * tileCount);
+            } while (snake.some(segment => segment.x === foodX && segment.y === foodY));
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            gameStarted = false;
+            instructionsEl.style.display = 'none';
+            gameOverEl.style.display = 'block';
+        }
+        
+        function resetGame() {
+            snake = [{x: 10, y: 10}];
+            dx = 0;
+            dy = 0;
+            score = 0;
+            scoreEl.textContent = score;
+            gameRunning = false;
+            gameStarted = false;
+            generateFood();
+            instructionsEl.style.display = 'block';
+            gameOverEl.style.display = 'none';
+        }
+        
+        function startGame() {
+            if (!gameStarted) {
+                gameRunning = true;
+                gameStarted = true;
+                instructionsEl.style.display = 'none';
+            }
+        }
+        
+        // Input handling
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (!gameRunning && gameStarted) {
+                    resetGame();
+                }
+                return;
+            }
+            
+            if (!gameRunning) return;
+            
+            const key = e.code;
+            
+            // Prevent reverse direction
+            if ((key === 'ArrowLeft' || key === 'KeyA') && dx !== 1) {
+                dx = -1; dy = 0; startGame();
+            }
+            if ((key === 'ArrowRight' || key === 'KeyD') && dx !== -1) {
+                dx = 1; dy = 0; startGame();
+            }
+            if ((key === 'ArrowUp' || key === 'KeyW') && dy !== 1) {
+                dx = 0; dy = -1; startGame();
+            }
+            if ((key === 'ArrowDown' || key === 'KeyS') && dy !== -1) {
+                dx = 0; dy = 1; startGame();
+            }
+        });
+        
+        // Key press to start
+        document.addEventListener('keydown', function(e) {
+            if (!gameStarted && !gameRunning && (
+                e.code === 'ArrowLeft' || e.code === 'ArrowRight' || 
+                e.code === 'ArrowUp' || e.code === 'ArrowDown' ||
+                e.code === 'KeyA' || e.code === 'KeyS' || 
+                e.code === 'KeyW' || e.code === 'KeyD'
+            )) {
+                gameRunning = true;
+                gameStarted = true;
+                instructionsEl.style.display = 'none';
+            }
+        });
+        
+        // Game loop
+        function gameLoop() {
+            update();
+            drawGame();
+        }
+        
+        // Initialize
+        generateFood();
+        drawGame();
+        setInterval(gameLoop, 150);
+    </script>
+</body>
+</html>
