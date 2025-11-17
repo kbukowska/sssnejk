@@ -15,6 +15,7 @@
 <body>
     <div class="score">Score: <span id="score">0</span></div>
     <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <div id="startMessage" class="restart">Use arrow keys or WASD to start playing!</div>
     <div id="gameOver" class="game-over" style="display: none;">Game Over!</div>
     <div id="restart" class="restart" style="display: none;">Press SPACE to restart</div>
 
@@ -24,6 +25,7 @@
         const scoreElement = document.getElementById('score');
         const gameOverElement = document.getElementById('gameOver');
         const restartElement = document.getElementById('restart');
+        const startMessageElement = document.getElementById('startMessage');
 
         const GRID_SIZE = 20;
         const TILE_COUNT = canvas.width / GRID_SIZE;
@@ -55,6 +57,9 @@
 
         function moveSnake() {
             if (!gameRunning) return;
+            
+            // Don't move if no direction is set yet
+            if (dx === 0 && dy === 0) return;
             
             const head = {x: snake[0].x + dx, y: snake[0].y + dy};
             
@@ -115,6 +120,7 @@
             gameRunning = true;
             gameOverElement.style.display = 'none';
             restartElement.style.display = 'none';
+            startMessageElement.style.display = 'block';
             generateFood();
         }
 
@@ -126,6 +132,11 @@
             const goingDown = dy === 1;
             const goingRight = dx === 1;
             const goingLeft = dx === -1;
+            
+            // Hide start message on first move
+            if (dx === 0 && dy === 0) {
+                startMessageElement.style.display = 'none';
+            }
             
             // Arrow keys and WASD
             if ((keyPressed === 37 || keyPressed === 65) && !goingRight) { // Left or A
